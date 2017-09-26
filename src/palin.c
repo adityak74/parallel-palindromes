@@ -1,20 +1,18 @@
-#include <stdio.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-#include "shm_info.h"
+#include "shm_header.h"
 #define PERM (S_IRUSR | S_IWUSR)
 
 int main(int argc, char const *argv[])
 {
-	key_t key;
-	int shmid;
 
-	struct shared_palinfo *shpinfo;
+	// if(argc != 3){
+	// 	fprintf(stderr, "Not enough arguments\n");
+	// 	return -1;
+	// }
+
+	key_t key = 0x6302c6be;
+	int shmid, i;
+
+	shared_palinfo *shpinfo;
 
 	shmid = shmget(key, sizeof(shared_palinfo), PERM);
 	
@@ -26,8 +24,23 @@ int main(int argc, char const *argv[])
 		shpinfo = shmat(shmid, NULL, 0);
 		if(shpinfo == (void *)-1)
 			return -1;
+
 		fprintf(stderr, "%d\n", shpinfo -> turn);
 		fprintf(stderr, "%d\n", shpinfo -> flag[0]);
+		for (i = 0; i < 4; ++i)
+		{
+			fprintf(stderr, "%s\n", shpinfo->buffer[i]);	
+		}
+		
+		// char* ptr = (char *)malloc(100);
+		// ptr = *shpinfo->mylist[0];
+		// printf("%x\n" , shpinfo->mylist[0]);
+		// printf("%s\n", shpinfo->mylist[0]);
+		// while(*ptr != '\0'){
+		// 	fprintf(stderr, "%c\n", *ptr);
+		// 	fprintf(stderr, "%x\n", ptr);
+		// 	ptr = ptr + 1;
+		// }
 	}
 
 	return 0;

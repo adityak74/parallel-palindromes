@@ -1,13 +1,19 @@
-#include "shm_info.h"
+#include "shm_header.h"
 
 #define PERM (S_IRUSR | S_IWUSR)
 
 int main(int argc, char const *argv[])
 {
 	key_t key;
-	int shmid;
+	int shmid, i;
+	pid_t childpid = 0;
 
-	struct shared_palinfo *shpinfo;
+	char* mylist_orig[4] = { "hellloweowoe",
+						"jsdfhn",
+						"dfjnhdkjfnhdf",
+						"sfhgdj"};
+
+	shared_palinfo *shpinfo;
 
 	key = ftok(".", 'c');
 	if(key == (key_t)-1) {
@@ -26,12 +32,32 @@ int main(int argc, char const *argv[])
 	} else {
 		shpinfo = shmat(shmid, NULL, 0);
 		if(shpinfo == (void *)-1)
-			return -1;
+	
 		shpinfo -> turn = 1;
 		shpinfo -> flag[0] = 9;
-	}
+		// shpinfo -> mylist[0] = mylist_orig[0];
+		for (i = 0; i < 4; ++i)
+		{
+			strcpy( shpinfo->buffer[i] , mylist_orig[i] );	
+		}
 
-	exec("./palin");
+	}
+	// printf("%x\n" , shpinfo->mylist[0]);
+	// printf("%x\n" , mylist_orig[0]);
+	// printf("%s\n", mylist_orig[0]);
+	// char * ptr = shpinfo->mylist[0];
+	// 	while(*ptr != '\0'){
+	// 		fprintf(stderr, "%c\n", *ptr);
+	// 		ptr = ptr + 1;
+	// 	}
+
+
+	for (i = 0; i < 2; ++i)
+		if ((childpid = fork()) <= 0)
+			break;
+	if(childpid == 0)
+		fprintf(stderr, "i:%d  process ID:%ld  parent ID:%ld  child ID:%ld\n",
+           i, (long)getpid(), (long)getppid(), (long)childpid);
 
 	return 0;
 }
