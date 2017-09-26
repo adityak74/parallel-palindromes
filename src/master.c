@@ -20,7 +20,7 @@ int main(int argc, char const *argv[])
 		fprintf(stderr, "Failed to derive key\n");
 	}
 
-	printf("%x\n", key);
+	// printf("%x\n", key);
 
 	shmid = shmget(key, sizeof(shared_palinfo), PERM | IPC_CREAT | IPC_EXCL);
 	if((shmid == -1) && (errno != EEXIST))
@@ -55,9 +55,13 @@ int main(int argc, char const *argv[])
 	for (i = 0; i < 2; ++i)
 		if ((childpid = fork()) <= 0)
 			break;
-	if(childpid == 0)
+	/* child process */
+	if(childpid == 0) {
 		fprintf(stderr, "i:%d  process ID:%ld  parent ID:%ld  child ID:%ld\n",
            i, (long)getpid(), (long)getppid(), (long)childpid);
+	} else { /* parent process */
+
+	}
 
 	return 0;
 }
