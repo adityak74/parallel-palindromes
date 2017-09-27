@@ -27,20 +27,12 @@ int main(int argc, char const *argv[])
 
 		fprintf(stderr, "%d\n", shpinfo -> turn);
 		fprintf(stderr, "%d\n", shpinfo -> flag[0]);
+
 		for (i = 0; i < 4; ++i)
 		{
-			fprintf(stderr, "%s\n", shpinfo->buffer[i]);	
+			fprintf(stderr, "%s\n", shpinfo -> buffer[0]);
 		}
 		
-		// char* ptr = (char *)malloc(100);
-		// ptr = *shpinfo->mylist[0];
-		// printf("%x\n" , shpinfo->mylist[0]);
-		// printf("%s\n", shpinfo->mylist[0]);
-		// while(*ptr != '\0'){
-		// 	fprintf(stderr, "%c\n", *ptr);
-		// 	fprintf(stderr, "%x\n", ptr);
-		// 	ptr = ptr + 1;
-		// }
 	}
 
 	return 0;

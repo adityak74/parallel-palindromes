@@ -35,22 +35,17 @@ int main(int argc, char const *argv[])
 	
 		shpinfo -> turn = 1;
 		shpinfo -> flag[0] = 9;
-		// shpinfo -> mylist[0] = mylist_orig[0];
+
 		for (i = 0; i < 4; ++i)
 		{
-			strcpy( shpinfo->buffer[i] , mylist_orig[i] );	
+			shpinfo -> buffer[i] = mylist_orig[i];	
 		}
-
 	}
-	// printf("%x\n" , shpinfo->mylist[0]);
-	// printf("%x\n" , mylist_orig[0]);
-	// printf("%s\n", mylist_orig[0]);
-	// char * ptr = shpinfo->mylist[0];
-	// 	while(*ptr != '\0'){
-	// 		fprintf(stderr, "%c\n", *ptr);
-	// 		ptr = ptr + 1;
-	// 	}
 
+	for (i = 0; i < 4; ++i)
+	{
+		fprintf(stderr, "%s\n", shpinfo -> buffer[i]);
+	}
 
 	for (i = 0; i < 2; ++i)
 		if ((childpid = fork()) <= 0)
@@ -60,8 +55,9 @@ int main(int argc, char const *argv[])
 		fprintf(stderr, "i:%d  process ID:%ld  parent ID:%ld  child ID:%ld\n",
            i, (long)getpid(), (long)getppid(), (long)childpid);
 	} else { /* parent process */
-
+		fprintf(stderr, "Parent i:%d  process ID:%ld  parent ID:%ld  child ID:%ld\n",
+           i, (long)getpid(), (long)getppid(), (long)childpid);
 	}
-
+    while(1);
 	return 0;
 }
