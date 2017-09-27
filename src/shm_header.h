@@ -10,7 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define SHM_KEY 1994
+#define SHM_KEY 19942017
 #define MAX_BUF_SIZE 100
 
 enum pState { idle, want_in, in_cs }; 
@@ -19,7 +19,7 @@ typedef struct
 {
 	int turn;
 	int flag[20];
-	char *buffer[100];
+	char *buffer[];
 } shared_palinfo;
 
 #endif
