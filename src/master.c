@@ -9,7 +9,7 @@ int main(int argc, char const *argv[])
 	key_t key;
 	int shmid, i;
 	pid_t childpid = 0;
-
+	int status;
 	shared_palinfo *shpinfo;
 
 	char all_strings[BUFF_SIZE][BUFF_SIZE];
@@ -56,7 +56,7 @@ int main(int argc, char const *argv[])
 		shpinfo = shmat(shmid, NULL, 0);
 		if(shpinfo == (void *)-1)
 	
-		shpinfo -> turn = 1;
+		shpinfo -> pturn = 5;
 		shpinfo -> flag[0] = 9;
 
 		//allocate memory for the char*
@@ -93,18 +93,25 @@ int main(int argc, char const *argv[])
 	} else { /* parent process */
 		// fprintf(stderr, "Parent i:%d  process ID:%ld  parent ID:%ld  child ID:%ld\n",
   //          i, (long)getpid(), (long)getppid(), (long)childpid);
-		int error = 0;
-		if(shmdt(shpinfo) == -1) {
-			error = errno;
-		}
-		if((shmctl(shmid, IPC_RMID, NULL) == -1) && !error) {
-			error = errno;
-		}
-		if(!error) {
-			return 0;
-		}
+		
 	}
     
+    for(i = 1; i <= 2; i++) {
+	    childpid = wait(&status);
+	    fprintf(stderr, "Master: Child %d has died....\n", childpid);
+	    // fprintf(stderr, "%s*****Master: %s%d%s/%d children are dead*****%s\n",YLW, RED, j, YLW, sValue, NRM);
+	}
+
+	int error = 0;
+	if(shmdt(shpinfo) == -1) {
+		error = errno;
+	}
+	if((shmctl(shmid, IPC_RMID, NULL) == -1) && !error) {
+		error = errno;
+	}
+	if(!error) {
+		return 0;
+	}
 
 	return 0;
 }

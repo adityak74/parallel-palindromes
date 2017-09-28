@@ -15,7 +15,7 @@ int main(int argc, char const *argv[])
 	shared_palinfo *shpalinfo;
 
 	shmid = shmget(key, sizeof(shared_palinfo), PERM);
-	fprintf(stderr, "%d\n", shmid);
+	
 	if(shmid == -1) {
 		if (((shmid = shmget(key, sizeof(shared_palinfo), PERM)) == -1) || 
 			(shpalinfo = (shared_palinfo*)shmat(shmid, NULL, 0) == (void *)-1) )
@@ -25,12 +25,13 @@ int main(int argc, char const *argv[])
 		if(shpalinfo == (void *)-1)
 			return -1;
 
-		fprintf(stderr, "%d\n", shpalinfo -> turn);
-		fprintf(stderr, "%d\n", shpalinfo -> flag[0]);
+		// fprintf(stderr, "%d\n", shpalinfo -> pturn);
+		// fprintf(stderr, "%d\n", shpalinfo -> flag[0]);
+		fprintf(stderr, "%s\n", shpalinfo -> buffer[0]);
 
 		if(shmdt(shpalinfo) == -1) {
 		    perror("Slave could not detach shared memory");
-		 }
+		}
 
 		// fprintf(stderr, "%d\n", shpalinfo -> buffer[0]);
 		// fprintf(stderr, "%x\n", shpalinfo -> buffer[0]);

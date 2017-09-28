@@ -17,7 +17,7 @@ enum pState { idle, want_in, in_cs };
 
 typedef struct 
 {
-	int turn;
+	int pturn;
 	int flag[20];
 	char *buffer[];
 } shared_palinfo;
