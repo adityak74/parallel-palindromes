@@ -15,10 +15,8 @@
 
 #define PERM 0666
 
-#define BUFF_SIZE 1024
-
 void intHandler(int);
-int max_processes_at_instant = 0;
+static int max_processes_at_instant = 0;
 
 int main(int argc, char const *argv[])
 {
@@ -31,11 +29,11 @@ int main(int argc, char const *argv[])
 	int numChildren = 19;
 	int max_writes = 5;
 
-	char all_strings[BUFF_SIZE][BUFF_SIZE];
+	char all_strings[MAX_BUF_SIZE][MAX_BUF_SIZE];
 	int num_strings = 0, pos = 0;
 
 	FILE* fp;
-	char buf[BUFF_SIZE];
+	char buf[MAX_BUF_SIZE];
 
 	if((fp = fopen("input.txt", "r")) == NULL){
 		perror("Couldn't open input file.\n");
@@ -105,15 +103,19 @@ int main(int argc, char const *argv[])
 	char *s_arg = malloc(sizeof(char)*20); 
 
 	
-	fprintf(stderr, "Total strings to process : %d\n", num_strings);
+	fprintf(stderr, "Total strings to process: %d\n", num_strings);
 
 	for (i = 0; i < numChildren; ++i){
+		max_processes_at_instant++;
 		if ((childpid = fork()) <= 0)
 			break;
 	}
 
 	/* child process */
 	if(childpid == 0) {
+
+		fprintf(stderr, "Max processes running now: %d\n", max_processes_at_instant);
+
 		childpid = getpid();
 		sprintf(i_arg, "%d", i);
 		sprintf(m_arg, "%d", max_writes);
@@ -137,8 +139,9 @@ int main(int argc, char const *argv[])
     for(i = 0; i < numChildren; i++) {
 	    childpid = wait(&status);
 	    if(childpid != -1) { // skip for a failed fork
-	    	fprintf(stderr, "Master: Child %d has died....\n", childpid);
-	    	
+	    	max_processes_at_instant--;
+	    	fprintf(stderr, "Max processes running now: %d\n", max_processes_at_instant);
+	    	fprintf(stderr, "Master: Child %d has died...\n", childpid);
 	    }
 	}
 
@@ -157,7 +160,6 @@ int main(int argc, char const *argv[])
 }
 
 // handle interrupts
-
 void intHandler(int SIGVAL) {
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, SIG_IGN);

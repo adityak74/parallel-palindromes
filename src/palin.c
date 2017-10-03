@@ -233,6 +233,9 @@ void alarm_handler(int sig) {
   kill(myPid, SIGKILL);
 }
 
+
+//function to check if a string is palindrome or not
+//return 1 if yes else 0
 int check_palindrome(char string_to_check[]) {
 	int str_len = strlen(string_to_check);
 	int start = 0, end = str_len - 1;
