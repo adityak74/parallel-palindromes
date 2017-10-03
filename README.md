@@ -47,16 +47,22 @@ $ make
 	The default value is 60.
 ```
 
-Clean the project:
+### Clean the project:
 
 ```
 $ make clean
 ```
 
-Clean the project only *.o:
-
+### Clean the project only *.o:
 ```
 $ make cleanobj
+```
+
+### Log:
+```
+debug.log - file shows the processID, index,c_s entered and time c_s exit.
+Sample message:
+Process (pid, processNumber) entered critical section at 15:10:42(1507061442).
 ```
 
 ***Parallel Palindromes*** : Project #2 as a part of CS4760. 
