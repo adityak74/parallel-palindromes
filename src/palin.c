@@ -32,12 +32,15 @@ int main(int argc, char const *argv[])
 	shared_palinfo *shpalinfo;
 	char *palin_out_filename = "palin.out";
 	char *nopalin_out_filename = "nopalin.out";
+	char *log_filename = "debug.log";
 	myPid = getpid();
 	int max_writes_in = 0;
-	FILE *file;
+	FILE *file, *log_fp;
 	char *short_options = "i:m:x:ms:h::";
 	int max_string_index = 0;
 	char c;
+	struct tm * time_info;
+	char timeString[9];  // print in log "HH:MM:SS\0"
 
 	//get options from parent process
 	opterr = 0;
@@ -56,12 +59,10 @@ int main(int argc, char const *argv[])
 	  	max_string_index = atoi(optarg);
 	  	break;
 	  case '?':
-	    fprintf(stderr, "    Arguments were not passed correctly to slave %d. Terminating.", myPid);
+	    fprintf(stderr, "    Arguments were not passed correctly to child %d. Terminating.", myPid);
 	    exit(-1);
 	}
-	
-	// fprintf(stderr, "In Child : %d :: %d %d %d %d\n",myPid, procNum, max_writes_in, stringIndex, max_string_index );
-	// exit(-1);
+
 	shmid = shmget(key, sizeof(shared_palinfo), PERM);
 	
 	if(shmid == -1) {
@@ -123,8 +124,6 @@ int main(int argc, char const *argv[])
 
 	    }while ((j < shpalinfo->totalProcesses) || (shpalinfo->proc_turn != procNum && shpalinfo->flag[shpalinfo->proc_turn] != idle));
 
-	    // Increment shared variable
-	    // shpalinfo->sharedInt++;
 	    fprintf(stderr,"    Child %d about to enter critical section...\n", procNum + 1);
 
 	    //Assign proc_turn to self and enter critical section
@@ -134,6 +133,18 @@ int main(int argc, char const *argv[])
 	    sleep(random);
 
 	    //** CRITICAL SECTION STARTS HERE **//
+
+	    time_t start_time;
+	    time(&start_time);
+		time_info = localtime(&start_time);
+
+		strftime(timeString, sizeof(timeString), "%H:%M:%S", time_info);
+
+	    log_fp = fopen(log_filename, "a");
+	    if(!log_fp) {
+	    	perror("	Error opening log file");
+	    }
+	    fprintf(log_fp, "Process (%d,%d) entered critical section at %s(%lu).\n", myPid, procNum, timeString, start_time);
 
 	    //check the string for palindrome
 
@@ -147,16 +158,26 @@ int main(int argc, char const *argv[])
 	      perror("    Error opening file");
 	      exit(-1);
 	    }
-
-	    time_t times = time(NULL);
 	    
-	    fprintf(file,"    File modified by process number %d at time %lu with stringIndex %d: %s\n", procNum + 1, times, stringIndex+i, shpalinfo->mylist[stringIndex+i]);
+	    time_t end_time;
+	    time(&end_time);
+
+	    fprintf(file,"    File modified by process number %d at time %lu with stringIndex %d: %s\n", procNum + 1, end_time, stringIndex+i, shpalinfo->mylist[stringIndex+i]);
 
 	    if(fclose(file)) {
 	      perror("    Error closing file");
 	    }
 
 	    fprintf(stderr,"    Child %d exiting critical section...\n", procNum + 1);
+	    
+		time_info = localtime(&end_time);
+		strftime(timeString, sizeof(timeString), "%H:%M:%S", time_info);
+	    fprintf(log_fp, "Process (%d,%d) exited critical section at %s(%lu).\n", myPid, procNum, timeString, end_time);
+	    
+	    if(fclose(log_fp)) {
+	      perror("    Error closing log file");
+	    }
+	    //** CRITICAL SECTION ENDS HERE **//
 
 	    //Exit section
 	    j = (shpalinfo->proc_turn + 1) % shpalinfo->totalProcesses;
@@ -188,7 +209,7 @@ int main(int argc, char const *argv[])
 	}
 
 	if(shmdt(shpalinfo) == -1) {
-	    perror("Slave could not detach shared memory");
+	    perror("Child could not detach shared memory");
 	}
 
 	kill(myPid, SIGTERM);
@@ -197,7 +218,7 @@ int main(int argc, char const *argv[])
 }
 
 void signal_quit_handler(int sig) {
-  printf("    Slave %d has received signal %s (%d)\n", procNum, strsignal(sig), sig);
+  printf("    Child %d has received signal %s (%d)\n", procNum, strsignal(sig), sig);
   signal_flag = 0;
   //The slaves have at most 10 more seconds to exit gracefully or they will be SIGTERM'd
   alarm(KILL_TIMEOUT);
@@ -206,7 +227,7 @@ void signal_quit_handler(int sig) {
 //function to kill itself if the alarm goes off,
 //signaling that the parent could not kill it off
 void alarm_handler(int sig) {
-  printf("    Slave %d is killing itself due to slave timeout override\n", procNum);
+  printf("    Child %d is killing itself due to slave timeout\n", procNum);
   kill(myPid, SIGTERM);
   sleep(1);
   kill(myPid, SIGKILL);

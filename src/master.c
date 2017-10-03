@@ -18,6 +18,7 @@
 #define BUFF_SIZE 1024
 
 void intHandler(int);
+int max_processes_at_instant = 0;
 
 int main(int argc, char const *argv[])
 {
@@ -106,24 +107,20 @@ int main(int argc, char const *argv[])
 	
 	fprintf(stderr, "Total strings to process : %d\n", num_strings);
 
-	for (i = 0; i < numChildren; ++i)
+	for (i = 0; i < numChildren; ++i){
 		if ((childpid = fork()) <= 0)
 			break;
+	}
 
 	/* child process */
 	if(childpid == 0) {
 		childpid = getpid();
 		sprintf(i_arg, "%d", i);
 		sprintf(m_arg, "%d", max_writes);
-		
 		// xx string id to test for palin for child
 		sprintf(x_arg, "%d", i*max_writes);
-
 		// max string ID to break
 		sprintf(s_arg, "%d", num_strings-1);
-
-		// fprintf(stderr, "In Child : %d :: %d %d %d %d\n", childpid, i, max_writes, i*max_writes, num_strings-1 );
-
 		char *palinOptions[] = {"./palin", "-i", i_arg, "-m", m_arg, "-x", x_arg, "-s", s_arg, (char *)0};
 		execv("./palin", palinOptions);
 	} else { /* parent process */
@@ -139,8 +136,10 @@ int main(int argc, char const *argv[])
     
     for(i = 0; i < numChildren; i++) {
 	    childpid = wait(&status);
-	    if(childpid != -1) // skip for a failed fork
+	    if(childpid != -1) { // skip for a failed fork
 	    	fprintf(stderr, "Master: Child %d has died....\n", childpid);
+	    	
+	    }
 	}
 
 	int error = 0;

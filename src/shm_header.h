@@ -2,7 +2,7 @@
 #define _SHM_HEADER_H
 
 #define SHM_KEY 19942017
-#define MAX_BUF_SIZE 100
+#define MAX_BUF_SIZE 1024
 
 enum pState { idle, want_in, in_cs }; 
 
