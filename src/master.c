@@ -92,6 +92,8 @@ int main(int argc, char const *argv[])
 		// copy strings to shared memory
 		for (i = 0; i < num_strings; ++i)
  		{
+ 		// 	shmid = shmget(key, sizeof(int *), PERM);
+			// shpinfo -> myptr[i] = shmat(shmid, NULL, 0);
  			strcpy( shpinfo->mylist[i] , all_strings[i] );
  		}
 

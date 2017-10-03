@@ -204,6 +204,9 @@ int main(int argc, char const *argv[])
 	if(i == max_writes_in) {
 		fprintf(stderr, "    Child %d COMPLETED WORK\n", procNum + 1);
 	}
+	else if(i==0){
+		fprintf(stderr, "    Child %d did NOT do any work\n", procNum + 1);
+	} 
 	else {
 		fprintf(stderr, "    Child %d did NOT complete work\n", procNum + 1);
 	}
@@ -220,7 +223,7 @@ int main(int argc, char const *argv[])
 void signal_quit_handler(int sig) {
   printf("    Child %d has received signal %s (%d)\n", procNum, strsignal(sig), sig);
   signal_flag = 0;
-  //The slaves have at most 10 more seconds to exit gracefully or they will be SIGTERM'd
+  //The child can quit after certain interval or they will be SIGTERM
   alarm(KILL_TIMEOUT);
 }
 

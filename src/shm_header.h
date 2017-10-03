@@ -12,6 +12,7 @@ typedef struct
 	int totalProcesses;
 	enum pState flag[20];
 	char mylist[MAX_BUF_SIZE][MAX_BUF_SIZE];
+	char *myptr[];
 } shared_palinfo;
 
 #endif
