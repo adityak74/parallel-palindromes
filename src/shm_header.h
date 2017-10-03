@@ -9,10 +9,9 @@ enum pState { idle, want_in, in_cs };
 typedef struct 
 {
 	int proc_turn;
-	int status;
-	int flag[20];
+	int totalProcesses;
+	enum pState flag[20];
 	char mylist[MAX_BUF_SIZE][MAX_BUF_SIZE];
-	// char *mylist_ptr[];
 } shared_palinfo;
 
 #endif
