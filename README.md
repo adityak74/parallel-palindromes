@@ -29,12 +29,22 @@ parallel-palindromes/
 ```
 $ make
 ```
+### Running:
+```
+./master -c<child_process> -w<max_writes> -t<timeout>
+```
 
 ### Help:
 
 ```
 ./master -h
-
+-h: Prints this help message.
+-c: Allows you to set the number of child process to run.
+	The default value is 19. The max is 19.
+-w: Allows you to set the number of times each child enters the critical section of code(writes to file).
+	The default value is 5.
+-t: Allows you set the wait time for the master process until it kills the slaves.
+	The default value is 60.
 ```
 
 Clean the project:

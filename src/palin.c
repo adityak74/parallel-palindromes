@@ -27,7 +27,6 @@ const int KILL_TIMEOUT = 10;
 int main(int argc, char const *argv[])
 {
 	srand(time(NULL));
-	key_t key = SHM_KEY;
 	int shmid, i, stringIndex;
 	shared_palinfo *shpalinfo;
 	char *palin_out_filename = "palin.out";
@@ -36,7 +35,7 @@ int main(int argc, char const *argv[])
 	myPid = getpid();
 	int max_writes_in = 0;
 	FILE *file, *log_fp;
-	char *short_options = "i:m:x:ms:h::";
+	char *short_options = "i:m:x:s:k:h::";
 	int max_string_index = 0;
 	char c;
 	struct tm * time_info;
@@ -58,26 +57,23 @@ int main(int argc, char const *argv[])
 	  case 's':
 	  	max_string_index = atoi(optarg);
 	  	break;
+	  case 'k':
+	  	shmid = atoi(optarg);
+	  	break;
 	  case '?':
 	    fprintf(stderr, "    Arguments were not passed correctly to child %d. Terminating.", myPid);
 	    exit(-1);
 	}
-
-	shmid = shmget(key, sizeof(shared_palinfo), PERM);
 	
-	if(shmid == -1) {
-		if (((shmid = shmget(key, sizeof(shared_palinfo), PERM)) == -1) || 
-			(shpalinfo = (shared_palinfo*)shmat(shmid, NULL, 0) == (void *)-1) ) {
-			perror("Unable to access shared mem");
-			exit(-1);
-		}
+	if((shpalinfo = (shared_palinfo*)shmat(shmid, NULL, 0) == (void *)-1)) {
+		perror("Unable to access shared mem");
+		exit(-1);
 	} else {
 		shpalinfo = (shared_palinfo*)shmat(shmid, NULL, 0);
 		if(shpalinfo == (void *)-1){
 			perror("Couldn't attach the shared mem");
 			exit(-1);
 		}
-		
 	}
 
 	//Ignore SIGINT so that it can be handled
@@ -122,7 +118,7 @@ int main(int argc, char const *argv[])
 	        }
 	      }
 
-	    }while ((j < shpalinfo->totalProcesses) || (shpalinfo->proc_turn != procNum && shpalinfo->flag[shpalinfo->proc_turn] != idle));
+	    } while ((j < shpalinfo->totalProcesses) || (shpalinfo->proc_turn != procNum && shpalinfo->flag[shpalinfo->proc_turn] != idle));
 
 	    fprintf(stderr,"    Child %d about to enter critical section...\n", procNum + 1);
 

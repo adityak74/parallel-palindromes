@@ -14,9 +14,11 @@
 #include "shm_header.h"
 
 #define PERM 0666
+#define MAXCHILD 20
 
 void intHandler(int);
-static int max_processes_at_instant = 0;
+void showHelpMessage();
+static int max_processes_at_instant = 0; // to count the max running processes at any instance
 
 int main(int argc, char const *argv[])
 {
@@ -25,16 +27,86 @@ int main(int argc, char const *argv[])
 	pid_t childpid = 0;
 	int status;
 	shared_palinfo *shpinfo;
-	int timerVal = 60;
-	int numChildren = 19;
-	int max_writes = 5;
+	int timerVal;
+	int numChildren;
+	int max_writes, helpflag = 0, maxwriteValue, index, nonoptargflag;
+	char *short_options = "hc:w:t:";
 
 	char all_strings[MAX_BUF_SIZE][MAX_BUF_SIZE];
 	int num_strings = 0, pos = 0;
-
+	char c;
 	FILE* fp;
 	char buf[MAX_BUF_SIZE];
 
+	opterr = 0;
+	while ((c = getopt (argc, argv, short_options)) != -1)
+	switch (c) {
+	case 'h':
+		helpflag = 1;
+		break;
+	case 'c':
+		numChildren = atoi(optarg);
+		if(numChildren > MAXCHILD) {
+		  numChildren = 19;
+		  fprintf(stderr, "No more than 19 child processes allowed. Reverting to 19.\n");
+		}
+		break;
+	case 'w':
+		max_writes = atoi(optarg);
+		break;
+	case 't':
+		timerVal = atoi(optarg);  
+		break;
+	case '?':
+		if (optopt == 's') {
+		  fprintf(stderr, "Option -%c requires an argument. Using default value [19].\n", optopt);
+		  numChildren = 19;
+		}
+		else if (optopt == 'w') {
+		  fprintf(stderr, "Option -%c requires an argument. Using default value [5].\n", optopt);
+		  max_writes = 5;
+		}
+		else if (optopt == 't') {
+		  fprintf(stderr, "Option -%c requires an argument. Using default value [60].\n", optopt);
+		  timerVal = 60;
+		}
+		else if (isprint (optopt)) {
+		  fprintf(stderr, "Unknown option -%c. Terminating.\n", optopt);
+		  return -1;
+		}
+		else {
+		  showHelpMessage();
+		  return 0; 
+		}
+	}
+
+	//print out all non-option arguments
+	for (index = optind; index < argc; index++) {
+		fprintf(stderr, "Non-option argument %s\n", argv[index]);
+		nonoptargflag = 1;
+	}
+
+	//if above printed out, print help message
+	//and return from process
+	if(nonoptargflag) {
+		showHelpMessage();
+		return 0;
+	}
+
+	//if help flag was activated, print help message
+	//then return from process
+	if(helpflag) {
+		showHelpMessage();
+		return 0;
+	}
+
+	if( numChildren<=0 || max_writes<=0 || timerVal<=0 ) {
+		showHelpMessage();
+		return 0;
+	}
+
+	//** Read strings to check from file **//
+	
 	if((fp = fopen("input.txt", "r")) == NULL){
 		perror("Couldn't open input file.\n");
 		return -1;
@@ -47,16 +119,19 @@ int main(int argc, char const *argv[])
 	}
 
 	fclose(fp);
+	//** END **//
 
-	// handle SIGNALS
+	// handle SIGNALS callback attached
 	signal(SIGALRM, intHandler);
 	signal(SIGINT, intHandler);
 
 	//set alarm
 	alarm(timerVal);
 
-	// key = ftok(".", 'c');
-	key = SHM_KEY;
+	// generate key using ftok
+	key = ftok(".", 'c');
+
+	// key = SHM_KEY;
 	if(key == (key_t)-1) {
 		fprintf(stderr, "Failed to derive key\n");
 	}
@@ -92,8 +167,6 @@ int main(int argc, char const *argv[])
 		// copy strings to shared memory
 		for (i = 0; i < num_strings; ++i)
  		{
- 		// 	shmid = shmget(key, sizeof(int *), PERM);
-			// shpinfo -> myptr[i] = shmat(shmid, NULL, 0);
  			strcpy( shpinfo->mylist[i] , all_strings[i] );
  		}
 
@@ -102,8 +175,8 @@ int main(int argc, char const *argv[])
 	char *i_arg = malloc(sizeof(char)*20);
 	char *m_arg = malloc(sizeof(char)*20);
 	char *x_arg = malloc(sizeof(char)*20);
-	char *s_arg = malloc(sizeof(char)*20); 
-
+	char *s_arg = malloc(sizeof(char)*20);
+	char *k_arg = malloc(sizeof(char)*20); 
 	
 	fprintf(stderr, "Total strings to process: %d\n", num_strings);
 
@@ -125,7 +198,9 @@ int main(int argc, char const *argv[])
 		sprintf(x_arg, "%d", i*max_writes);
 		// max string ID to break
 		sprintf(s_arg, "%d", num_strings-1);
-		char *palinOptions[] = {"./palin", "-i", i_arg, "-m", m_arg, "-x", x_arg, "-s", s_arg, (char *)0};
+		// share shmid with children
+		sprintf(k_arg, "%d", shmid);
+		char *palinOptions[] = {"./palin", "-i", i_arg, "-m", m_arg, "-x", x_arg, "-s", s_arg, "-k", k_arg, (char *)0};
 		execv("./palin", palinOptions);
 	} else { /* parent process */
 		
@@ -136,7 +211,7 @@ int main(int argc, char const *argv[])
 	free(m_arg);
 	free(x_arg);
 	free(s_arg);
-
+	free(k_arg);
     
     for(i = 0; i < numChildren; i++) {
 	    childpid = wait(&status);
@@ -167,7 +242,7 @@ void intHandler(int SIGVAL) {
 	signal(SIGINT, SIG_IGN);
 
 	if(SIGVAL == SIGINT) {
-		fprintf(stderr, "%sCTRL-C Interrupt\n");
+		fprintf(stderr, "%sCTRL-C Interrupt initiated.\n");
 	}
 
 	if(SIGVAL == SIGALRM) {
@@ -176,4 +251,15 @@ void intHandler(int SIGVAL) {
 
 	kill(-getpgrp(), SIGQUIT);
 
+}
+
+// help message for running options
+void showHelpMessage() {
+	printf("-h: Prints this help message.\n");
+    printf("-c: Allows you to set the number of child process to run.\n");
+    printf("\tThe default value is 19. The max is 19.\n");
+    printf("-w: Allows you to set the number of times each child enters the critical section of code(writes to file).\n");
+    printf("\tThe default value is 5.\n");
+    printf("-t: Allows you set the wait time for the master process until it kills the slaves.\n");
+    printf("\tThe default value is 60.\n");
 }
