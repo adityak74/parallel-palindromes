@@ -1,8 +1,22 @@
+#include <stdio.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/wait.h>
+#include <sys/shm.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+
 #include "shm_header.h"
 
-#define PERM 0777
+#define PERM 0666
 
 #define BUFF_SIZE 1024
+
+void intHandler(int);
 
 int main(int argc, char const *argv[])
 {
@@ -25,19 +39,15 @@ int main(int argc, char const *argv[])
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		buf[strlen(buf) - 1] = '\0'; // eat the newline fgets() stores
-		// printf("%s\n", buf);
 		strcpy(all_strings[pos++], buf);
 		num_strings++;
 	}
 
 	fclose(fp);
 
-	/* All stings read */
-	// fprintf(stderr, "Strings read from input.txt\n");
-	// for (i = 0; i < num_strings; ++i)
-	// {
-	// 	fprintf(stderr, "%s\n", all_strings[i]);
-	// }
+	// handle SIGNALS
+	signal(SIGALRM, intHandler);
+	signal(SIGINT, intHandler);
 
 	// key = ftok(".", 'c');
 	key = SHM_KEY;
@@ -55,39 +65,30 @@ int main(int argc, char const *argv[])
 	} else {
 		shpinfo = shmat(shmid, NULL, 0);
 		if(shpinfo == (void *)-1)
-	
-		shpinfo -> pturn = 5;
-		shpinfo -> flag[0] = 9;
+			return -1;
 
-		//allocate memory for the char*
-		for (i = 0; i < num_strings; ++i)
-		{
-			shmid = shmget(key, sizeof(char*), IPC_CREAT | 0777);
-			shpinfo -> buffer[i] = (char*)shmat(shmid,0,0);
-		}
+		shmid = shmget(key, num_strings*sizeof(char), IPC_CREAT | 0777);
 		
+		shpinfo -> status = 5;
+		shpinfo -> proc_turn = 9;
 
 		for (i = 0; i < num_strings; ++i)
-		{
-			shpinfo -> buffer[i] = all_strings[i];	
-		}
+ 		{
+ 			strcpy( shpinfo->mylist[i] , all_strings[i] );
+ 		}
+
 	}
 
-	for (i = 0; i < num_strings; ++i)
-	{
-		fprintf(stderr, "%s\n", shpinfo -> buffer[i]);
-		// fprintf(stderr, "%d\n", shpinfo -> buffer[i]);
-		// fprintf(stderr, "%x\n", shpinfo -> buffer[i]);
-		// fprintf(stderr, "%p\n", shpinfo -> buffer[i]);
-	}
-
-	for (i = 0; i < 2; ++i)
+	for (i = 0; i < 1; ++i)
 		if ((childpid = fork()) <= 0)
 			break;
 	/* child process */
 	if(childpid == 0) {
-		// fprintf(stderr, "i:%d  process ID:%ld  parent ID:%ld  child ID:%ld\n",
-  //          i, (long)getpid(), (long)getppid(), (long)childpid);
+		
+
+		// sprintf();
+
+
 		char *palinOptions[] = {"./palin","1", "2", (char *)0};
 		execv("./palin", palinOptions);
 	} else { /* parent process */
@@ -96,10 +97,9 @@ int main(int argc, char const *argv[])
 		
 	}
     
-    for(i = 1; i <= 2; i++) {
+    for(i = 0; i < 1; i++) {
 	    childpid = wait(&status);
 	    fprintf(stderr, "Master: Child %d has died....\n", childpid);
-	    // fprintf(stderr, "%s*****Master: %s%d%s/%d children are dead*****%s\n",YLW, RED, j, YLW, sValue, NRM);
 	}
 
 	int error = 0;
@@ -114,4 +114,22 @@ int main(int argc, char const *argv[])
 	}
 
 	return 0;
+}
+
+// handle interrupts
+
+void intHandler(int SIGVAL) {
+	signal(SIGQUIT, SIG_IGN);
+	signal(SIGINT, SIG_IGN);
+
+	if(SIGVAL == SIGINT) {
+		fprintf(stderr, "%sCTRL-C Interrupt\n");
+	}
+
+	if(SIGVAL == SIGALRM) {
+		fprintf(stderr, "%sMaster timed out. Terminating rest all process.\n");
+	}
+
+	kill(-getpgrp(), SIGQUIT);
+
 }

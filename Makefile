@@ -6,6 +6,7 @@ CC	= gcc
 TARGETS	= master palin 
 OBJS	= master.o palin.o
 SRCDIR  = src
+HEADER = shm_header.h
 
 all: $(TARGETS)
 

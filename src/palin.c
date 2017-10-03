@@ -1,18 +1,51 @@
+#include <stdio.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/wait.h>
+#include <sys/shm.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+
 #include "shm_header.h"
-#define PERM 0777
+
+#define PERM 0666
+
+int procNum = 0;
+pid_t myPid;
 
 int main(int argc, char const *argv[])
 {
-
-	if(argc != 3){
-		fprintf(stderr, "Not enough arguments\n");
-		return -1;
-	}
-
 	key_t key = SHM_KEY;
-	int shmid, i;
-
+	int shmid, i, stringIndex;
 	shared_palinfo *shpalinfo;
+	char *palin_out_filename = "palin.out";
+	char *nopalin_out_filename = "nopalin.out";
+	myPid = getpid();
+	int max_writes = 5;
+	FILE *palin_fp, *nopalin_fp;
+	char *short_options = "i:n:x:h::";
+	char c;
+
+	//get options from parent process
+	opterr = 0;
+	while((c = getopt(argc, argv, short_options)) != -1) 
+	switch (c) {
+	  case 'i':
+	    max_writes = atoi(optarg);
+	    break;
+	  case 'n':
+	    procNum = atoi(optarg);
+	    break;
+	  case 'x':
+	  	stringIndex = atoi(optarg);
+	  case '?':
+	    fprintf(stderr, "    Arguments were not passed correctly to slave %d. Terminating.", myPid);
+	    exit(-1);
+	}
 
 	shmid = shmget(key, sizeof(shared_palinfo), PERM);
 	
@@ -21,39 +54,14 @@ int main(int argc, char const *argv[])
 			(shpalinfo = (shared_palinfo*)shmat(shmid, NULL, 0) == (void *)-1) )
 			return -1;
 	} else {
-		shpalinfo = shmat(shmid, NULL, 0);
+		shpalinfo = (shared_palinfo*)shmat(shmid, NULL, 0);
 		if(shpalinfo == (void *)-1)
 			return -1;
-
-		// fprintf(stderr, "%d\n", shpalinfo -> pturn);
-		// fprintf(stderr, "%d\n", shpalinfo -> flag[0]);
-		fprintf(stderr, "%s\n", shpalinfo -> buffer[0]);
 
 		if(shmdt(shpalinfo) == -1) {
 		    perror("Slave could not detach shared memory");
 		}
 
-		// fprintf(stderr, "%d\n", shpalinfo -> buffer[0]);
-		// fprintf(stderr, "%x\n", shpalinfo -> buffer[0]);
-		// fprintf(stderr, "%p\n", shpalinfo -> buffer[0]);
-
-		// char* ptr;
-		// *ptr = (char *)shpalinfo -> buffer[0];
-		// char arr[100];
-		// int pos = 0;
-		// while((*ptr) != '\0') {
-		// 	// fprintf(stderr, "%c", *ptr);
-		// 	arr[pos++] = *ptr;
-		// 	ptr = ptr + 1;
-			
-		// }
-		// arr[pos] = '\0';
-		// fprintf(stderr, "%s\n", arr);
-
-		// for (i = 0; i < 4; ++i)
-		// {
-		// 	fprintf(stderr, "%s\n", shpalinfo -> buffer[0]);
-		// }
 		
 	}
 
