@@ -30,6 +30,7 @@ parallel-palindromes/
 $ make
 ```
 ### Running:
+
 ```
 ./master -c<child_process> -w<max_writes> -t<timeout>
 ```
@@ -54,15 +55,17 @@ $ make clean
 ```
 
 ### Clean the project only *.o:
+
 ```
 $ make cleanobj
 ```
 
 ### Log:
+
 ```
 debug.log - file shows the processID, index,c_s entered and time c_s exit.
 Sample message:
-Process (pid, processNumber) entered critical section at 15:10:42(1507061442).
+Process (pid, processNumber) entered critical section at HH:MM:SS(timestamp).
 ```
 
 ***Parallel Palindromes*** : Project #2 as a part of CS4760. 
