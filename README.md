@@ -32,7 +32,7 @@ $ make
 ### Running:
 
 ```
-./master -c<child_process> -w<max_writes> -t<timeout>
+./master -c<child_process> -w<max_writes> -t<timeout> -f<input_filename>
 ```
 
 ### Help:
@@ -46,6 +46,7 @@ $ make
 	The default value is 5.
 -t: Allows you set the wait time for the master process until it kills the slaves.
 	The default value is 60.
+-f: Input file to be used.
 ```
 
 ### Clean the project:

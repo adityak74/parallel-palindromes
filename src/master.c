@@ -30,8 +30,8 @@ int main(int argc, char const *argv[])
 	int timerVal;
 	int numChildren;
 	int max_writes, helpflag = 0, maxwriteValue, index, nonoptargflag;
-	char *short_options = "hc:w:t:";
-
+	char *short_options = "hc:w:t:f:";
+	char *input_filename;
 	char all_strings[MAX_BUF_SIZE][MAX_BUF_SIZE];
 	int num_strings = 0, pos = 0;
 	char c;
@@ -57,6 +57,9 @@ int main(int argc, char const *argv[])
 	case 't':
 		timerVal = atoi(optarg);  
 		break;
+	case 'f':
+		input_filename = optarg;  
+		break;
 	case '?':
 		if (optopt == 's') {
 		  fprintf(stderr, "Option -%c requires an argument. Using default value [19].\n", optopt);
@@ -69,6 +72,10 @@ int main(int argc, char const *argv[])
 		else if (optopt == 't') {
 		  fprintf(stderr, "Option -%c requires an argument. Using default value [60].\n", optopt);
 		  timerVal = 60;
+		}
+		else if( optopt == 'f') {
+		  fprintf(stderr, "Option -%c requires an argument. Using default value [input.txt] .\n", optopt);
+		  input_filename = "input.txt";
 		}
 		else if (isprint (optopt)) {
 		  fprintf(stderr, "Unknown option -%c. Terminating.\n", optopt);
@@ -107,7 +114,7 @@ int main(int argc, char const *argv[])
 
 	//** Read strings to check from file **//
 	
-	if((fp = fopen("input.txt", "r")) == NULL){
+	if((fp = fopen(input_filename, "r")) == NULL){
 		perror("Couldn't open input file.\n");
 		return -1;
 	}
@@ -262,4 +269,6 @@ void showHelpMessage() {
     printf("\tThe default value is 5.\n");
     printf("-t: Allows you set the wait time for the master process until it kills the slaves.\n");
     printf("\tThe default value is 60.\n");
+    printf("-f: Input file to be used.\n");
+    printf("\tThe default is input.txt .\n");
 }
